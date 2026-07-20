@@ -121,15 +121,21 @@ export default function TicketsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingTicket) {
-      await api.put(`/tickets/${editingTicket._id}`, form);
-      toast.success('Ticket updated');
-    } else {
-      await api.post('/tickets', form);
-      toast.success('Ticket created');
+    const payload = { ...form, epicId: form.epicId || undefined, sprintId: form.sprintId || undefined };
+    try {
+      if (editingTicket) {
+        await api.put(`/tickets/${editingTicket._id}`, payload);
+        toast.success('Ticket updated');
+      } else {
+        await api.post('/tickets', payload);
+        toast.success('Ticket created');
+      }
+      setShowForm(false);
+      load();
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || 'Failed to save ticket');
     }
-    setShowForm(false);
-    load();
   };
 
   const confirmDelete = async () => {
@@ -338,7 +344,53 @@ export default function TicketsPage() {
           action={{ label: 'New Ticket', onClick: openCreate }}
         />
       ) : (
-        <div className="bg-[var(--color-surface)] rounded-[var(--radius-card)] border border-[var(--color-border)] overflow-hidden">
+        <>
+          <div className="md:hidden space-y-3">
+            {tickets.map((t) => (
+              <div
+                key={t._id}
+                onClick={() => setViewTicket(t)}
+                className="bg-[var(--color-surface)] rounded-[var(--radius-card)] border border-[var(--color-border)] p-4 cursor-pointer active:opacity-80 transition-opacity"
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <span className="font-mono text-xs font-bold text-[var(--color-text-muted)]">{t.ticketNo}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(t._id); }}
+                  >
+                    {t.isFavorite ? '⭐' : '☆'}
+                  </Button>
+                </div>
+                <p className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">{t.title}</p>
+                <p className="text-xs text-[var(--color-text-secondary)] mb-3">{getProjectName(t.projectId)}</p>
+                <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                  <Badge variant={statusVariant[t.status] || 'default'} dot>{getStatusLabel(t.status)}</Badge>
+                  <Badge variant={priorityVariant[t.priority] || 'default'}>{t.priority}</Badge>
+                  <Badge variant="default">{t.type}</Badge>
+                </div>
+                <div className="flex items-center justify-end gap-1 pt-2 border-t border-[var(--color-border-light)]">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); openEdit(t); }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-[var(--color-danger)]"
+                    onClick={(e) => { e.stopPropagation(); setDeleteId(t._id); }}
+                  >
+                    Del
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden md:block bg-[var(--color-surface)] rounded-[var(--radius-card)] border border-[var(--color-border)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -400,7 +452,8 @@ export default function TicketsPage() {
               </tbody>
             </table>
           </div>
-        </div>
+          </div>
+        </>
       )}
 
       <ConfirmDialog
