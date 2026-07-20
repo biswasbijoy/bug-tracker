@@ -1,0 +1,228 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-light: #DBEAFE;
+  --color-primary-dark: #1E40AF;
+  --color-success: #16A34A;
+  --color-success-light: #D1FAE5;
+  --color-warning: #EAB308;
+  --color-warning-light: #FEF3C7;
+  --color-danger: #DC2626;
+  --color-danger-light: #FEE2E2;
+  --color-info: #0EA5E9;
+  --color-info-light: #E0F2FE;
+  --color-surface: #FFFFFF;
+  --color-bg: #F8FAFC;
+  --color-bg-elevated: #FFFFFF;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6B7280;
+  --color-text-muted: #9CA3AF;
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  --radius-btn: 10px;
+  --radius-card: 14px;
+  --radius-dialog: 16px;
+  --radius-input: 10px;
+  --radius-table: 12px;
+  --spacing-unit: 8px;
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-dialog: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-dropdown: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+}
+
+/* ==================== BASE STYLES ==================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==================== DARK THEME ==================== */
+
+.dark {
+  --color-primary: #3B82F6;
+  --color-primary-hover: #60A5FA;
+  --color-primary-light: #1E3A5F;
+  --color-primary-dark: #93C5FD;
+  --color-success: #22C55E;
+  --color-success-light: #14532D;
+  --color-warning: #FACC15;
+  --color-warning-light: #713F12;
+  --color-danger: #EF4444;
+  --color-danger-light: #7F1D1D;
+  --color-info: #38BDF8;
+  --color-info-light: #0C4A6E;
+  --color-surface: #1E293B;
+  --color-bg: #0F172A;
+  --color-bg-elevated: #1E293B;
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+  --color-border: #334155;
+  --color-border-light: #1E293B;
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-dialog: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --shadow-dropdown: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+}
+
+.dark body {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+/* ==================== STATUS BADGES ==================== */
+
+.status-to-do { background: #F3F4F6; color: #374151; }
+.status-in-progress { background: #DBEAFE; color: #1D4ED8; }
+.status-qa { background: #FEF3C7; color: #B45309; }
+.status-ready-for-qa { background: #D1FAE5; color: #047857; }
+.status-retest { background: #FEE2E2; color: #B91C1C; }
+.status-blocked { background: #FCE7F3; color: #BE185D; }
+.status-ready-for-deploy { background: #E0E7FF; color: #4338CA; }
+.status-production { background: #DBEAFE; color: #1E40AF; }
+.status-staging { background: #FEF3C7; color: #92400E; }
+.status-closed { background: #D1FAE5; color: #065F46; }
+.status-cancelled { background: #F3F4F6; color: #6B7280; }
+
+.dark .status-to-do { background: #1E293B; color: #94A3B8; }
+.dark .status-in-progress { background: #1E3A5F; color: #93C5FD; }
+.dark .status-qa { background: #713F12; color: #FDE68A; }
+.dark .status-ready-for-qa { background: #14532D; color: #86EFAC; }
+.dark .status-retest { background: #7F1D1D; color: #FCA5A5; }
+.dark .status-blocked { background: #831843; color: #F9A8D4; }
+.dark .status-ready-for-deploy { background: #312E81; color: #A5B4FC; }
+.dark .status-production { background: #1E3A5F; color: #93C5FD; }
+.dark .status-staging { background: #713F12; color: #FDE68A; }
+.dark .status-closed { background: #14532D; color: #86EFAC; }
+.dark .status-cancelled { background: #1E293B; color: #64748B; }
+
+/* ==================== PRIORITY COLORS ==================== */
+
+.priority-highest { color: #DC2626; }
+.priority-high { color: #EA580C; }
+.priority-medium { color: #CA8A04; }
+.priority-low { color: #16A34A; }
+.priority-lowest { color: #6B7280; }
+
+/* ==================== SKELETON ANIMATION ==================== */
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-skeleton {
+  animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ==================== SLIDE OVER ANIMATION ==================== */
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slide-out-right {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slide-out-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes scale-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-in-right { animation: slide-in-right 200ms ease-out; }
+.animate-slide-out-right { animation: slide-out-right 200ms ease-in; }
+.animate-slide-in-left { animation: slide-in-left 200ms ease-out; }
+.animate-slide-out-left { animation: slide-out-left 200ms ease-in; }
+.animate-fade-in { animation: fade-in 150ms ease-out; }
+.animate-fade-out { animation: fade-out 150ms ease-in; }
+.animate-scale-in { animation: scale-in 200ms ease-out; }
+.animate-scale-out { animation: scale-out 200ms ease-in; }
+.animate-slide-up { animation: slide-up 200ms ease-out; }
+
+/* ==================== FOCUS RING ==================== */
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ==================== SCROLLBAR STYLES ==================== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ==================== DRAG AND DROP ==================== */
+
+.kanban-dragging {
+  opacity: 0.8;
+  transform: rotate(2deg);
+}
+
+.kanban-drop-indicator {
+  background: var(--color-primary-light);
+  border: 2px dashed var(--color-primary);
+}
