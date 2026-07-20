@@ -1,9 +1,13 @@
 param(
-  [string]$DbPath = "D:\Programming Practice\Ticket-Tracker\data"
+  [string]$DbPath = "$PSScriptRoot\data"
 )
 
 $ErrorActionPreference = "Stop"
 $rootDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+
+if (-not (Test-Path $DbPath)) {
+  New-Item -ItemType Directory -Path $DbPath -Force | Out-Null
+}
 
 Write-Host "================================" -ForegroundColor Cyan
 Write-Host "   SQA Ticket Tracker Launcher  " -ForegroundColor Cyan
