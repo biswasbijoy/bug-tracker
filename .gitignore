@@ -5,3 +5,5 @@ uploads/
 .env
 .env.local
 *.log
+plan.md
+UIPlan.md
