@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import api from '@/services/api';
 import { Ticket } from '@/types';
+import { statusColors } from '@/components/ui/StatusBadge';
 import AppLayout from '@/components/layout/AppLayout';
 import toast from 'react-hot-toast';
 import Card from '@/components/ui/Card';
@@ -11,13 +12,22 @@ import { SkeletonCard } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 
 const columns = [
-  { id: 'to-do', title: 'To Do' },
+  { id: 'open', title: 'Open' },
+  { id: 'backlog', title: 'Backlog' },
+  { id: 'ready', title: 'Ready' },
   { id: 'in-progress', title: 'In Progress' },
-  { id: 'qa', title: 'QA' },
-  { id: 'retest', title: 'Retest' },
-  { id: 'ready-for-deploy', title: 'Ready for Deploy' },
-  { id: 'production', title: 'Production' },
+  { id: 'blocked', title: 'Blocked' },
+  { id: 'code-review', title: 'Code Review' },
+  { id: 'ready-for-qa', title: 'Ready for QA' },
+  { id: 'qa-in-progress', title: 'QA In Progress' },
+  { id: 'qa-failed', title: 'QA Failed' },
+  { id: 'ready-for-release', title: 'Ready for Release' },
+  { id: 'released', title: 'Released' },
+  { id: 'done', title: 'Done' },
   { id: 'closed', title: 'Closed' },
+  { id: 'reopened', title: 'Reopened' },
+  { id: 'cancelled', title: 'Cancelled' },
+  { id: 'stage', title: 'Stage' },
 ];
 
 export default function KanbanPage() {
@@ -104,7 +114,9 @@ export default function KanbanPage() {
                               }`}
                             >
                               <p className="text-xs font-bold text-[var(--color-text-muted)] mb-1">{ticket.ticketNo}</p>
-                              <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{ticket.title}</p>
+                              <p className="text-sm font-medium truncate">
+                                <span className="inline-flex px-2 py-0.5 rounded" style={{ backgroundColor: statusColors[ticket.status]?.bg, color: statusColors[ticket.status]?.text }}>{ticket.title}</span>
+                              </p>
                               <div className="flex items-center gap-2 mt-2">
                                 <span className={`text-xs capitalize priority-${ticket.priority}`}>{ticket.priority}</span>
                                 <span className="text-xs text-[var(--color-text-muted)]">{ticket.type}</span>

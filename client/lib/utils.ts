@@ -48,11 +48,27 @@ export function getPriorityColor(priority: string): string {
   return `priority-${priority}`;
 }
 
+const statusLabels: Record<string, string> = {
+  'open': 'Open',
+  'backlog': 'Backlog',
+  'ready': 'Ready',
+  'in-progress': 'In Progress',
+  'blocked': 'Blocked',
+  'code-review': 'Code Review',
+  'ready-for-qa': 'Ready for QA',
+  'qa-in-progress': 'QA In Progress',
+  'qa-failed': 'QA Failed',
+  'ready-for-release': 'Ready for Release',
+  'released': 'Released',
+  'done': 'Done',
+  'closed': 'Closed',
+  'reopened': 'Reopened',
+  'cancelled': 'Cancelled',
+  'stage': 'Stage',
+};
+
 export function getStatusLabel(status: string): string {
-  return status
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  return statusLabels[status] || status;
 }
 
 export function generateId(): string {
