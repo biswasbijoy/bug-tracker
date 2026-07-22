@@ -1,32 +1,51 @@
 'use client';
 
-import Badge from './Badge';
 import { TicketStatus, TicketPriority } from '@/types';
 
+export const statusColors: Record<string, { bg: string; text: string; label: string }> = {
+  'open': { bg: '#DBEAFE', text: '#1D4ED8', label: 'Open' },
+  'backlog': { bg: '#E2E8F0', text: '#475569', label: 'Backlog' },
+  'ready': { bg: '#CFFAFE', text: '#0E7490', label: 'Ready' },
+  'in-progress': { bg: '#FEF3C7', text: '#B45309', label: 'In Progress' },
+  'blocked': { bg: '#FEE2E2', text: '#B91C1C', label: 'Blocked' },
+  'code-review': { bg: '#EDE9FE', text: '#6D28D9', label: 'Code Review' },
+  'ready-for-qa': { bg: '#E0F2FE', text: '#0369A1', label: 'Ready for QA' },
+  'qa-in-progress': { bg: '#CCFBF1', text: '#0F766E', label: 'QA In Progress' },
+  'qa-failed': { bg: '#FFE4E6', text: '#BE123C', label: 'QA Failed' },
+  'ready-for-release': { bg: '#ECFCCB', text: '#4D7C0F', label: 'Ready for Release' },
+  'released': { bg: '#DCFCE7', text: '#15803D', label: 'Released' },
+  'done': { bg: '#BBF7D0', text: '#166534', label: 'Done' },
+  'closed': { bg: '#E5E7EB', text: '#374151', label: 'Closed' },
+  'reopened': { bg: '#FED7AA', text: '#C2410C', label: 'Reopened' },
+  'cancelled': { bg: '#F3F4F6', text: '#6B7280', label: 'Cancelled' },
+  'stage': { bg: '#E0F2FE', text: '#0369A1', label: 'Stage' },
+};
+
 interface StatusBadgeProps {
-  status: TicketStatus;
+  status: string;
   className?: string;
 }
 
-const statusConfig: Record<TicketStatus, { label: string; variant: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'outline' }> = {
-  'to-do': { label: 'To Do', variant: 'default' },
-  'in-progress': { label: 'In Progress', variant: 'primary' },
-  'qa': { label: 'QA', variant: 'warning' },
-  'ready-for-qa': { label: 'Ready for QA', variant: 'success' },
-  'retest': { label: 'Retest', variant: 'danger' },
-  'blocked': { label: 'Blocked', variant: 'danger' },
-  'ready-for-deploy': { label: 'Ready for Deploy', variant: 'info' },
-  'production': { label: 'Production', variant: 'primary' },
-  'closed': { label: 'Closed', variant: 'success' },
-  'cancelled': { label: 'Cancelled', variant: 'outline' },
-};
-
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = statusConfig[status] || statusConfig['to-do'];
+  const color = statusColors[status] || { bg: '#F3F4F6', text: '#6B7280', label: status };
   return (
-    <Badge variant={config.variant} dot className={className}>
-      {config.label}
-    </Badge>
+    <span
+      className={className}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '4px 12px',
+        borderRadius: '9999px',
+        fontSize: '0.75rem',
+        fontWeight: 500,
+        backgroundColor: color.bg,
+        color: color.text,
+        whiteSpace: 'nowrap',
+        lineHeight: '1.25rem',
+      }}
+    >
+      {color.label}
+    </span>
   );
 }
 
@@ -45,9 +64,30 @@ const priorityConfig: Record<TicketPriority, { label: string; variant: 'default'
 
 export function PriorityBadge({ priority, className }: PriorityBadgeProps) {
   const config = priorityConfig[priority] || priorityConfig['medium'];
+  const variantStyles: Record<string, React.CSSProperties> = {
+    danger: { backgroundColor: '#FEE2E2', color: '#B91C1C' },
+    warning: { backgroundColor: '#FEF3C7', color: '#B45309' },
+    success: { backgroundColor: '#DCFCE7', color: '#15803D' },
+    default: { backgroundColor: '#F3F4F6', color: '#6B7280' },
+    outline: { backgroundColor: '#F3F4F6', color: '#6B7280', border: '1px solid #E5E7EB' },
+  };
+  const style = variantStyles[config.variant] || variantStyles.default;
   return (
-    <Badge variant={config.variant} className={className}>
+    <span
+      className={className}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '4px 12px',
+        borderRadius: '9999px',
+        fontSize: '0.75rem',
+        fontWeight: 500,
+        ...style,
+        whiteSpace: 'nowrap',
+        lineHeight: '1.25rem',
+      }}
+    >
       {config.label}
-    </Badge>
+    </span>
   );
 }

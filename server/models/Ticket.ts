@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export type TicketType = 'story' | 'task' | 'bug' | 'improvement' | 'spike' | 'technical-task' | 'research' | 'production-issue';
-export type TicketStatus = 'to-do' | 'in-progress' | 'qa' | 'ready-for-qa' | 'retest' | 'blocked' | 'ready-for-deploy' | 'production' | 'closed' | 'cancelled';
+export type TicketStatus = 'open' | 'backlog' | 'ready' | 'in-progress' | 'blocked' | 'code-review' | 'ready-for-qa' | 'qa-in-progress' | 'qa-failed' | 'ready-for-release' | 'released' | 'done' | 'closed' | 'reopened' | 'cancelled' | 'stage';
 export type TicketPriority = 'highest' | 'high' | 'medium' | 'low' | 'lowest';
 export type TicketSeverity = 'critical' | 'major' | 'minor' | 'trivial';
 export type TicketEnvironment = 'local' | 'dev' | 'qa' | 'staging' | 'uat' | 'production';
@@ -108,8 +108,8 @@ const TicketSchema = new Schema<ITicket>(
     reporter: { type: String, trim: true },
     status: {
       type: String,
-      enum: ['to-do', 'in-progress', 'qa', 'ready-for-qa', 'retest', 'blocked', 'ready-for-deploy', 'production', 'closed', 'cancelled'],
-      default: 'to-do',
+      enum: ['open', 'backlog', 'ready', 'in-progress', 'blocked', 'code-review', 'ready-for-qa', 'qa-in-progress', 'qa-failed', 'ready-for-release', 'released', 'done', 'closed', 'reopened', 'cancelled', 'stage'],
+      default: 'open',
     },
     priority: {
       type: String,

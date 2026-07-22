@@ -6,6 +6,7 @@ import { Ticket, Project, Epic, Sprint, TicketType, TicketPriority, TicketSeveri
 import AppLayout from '@/components/layout/AppLayout';
 import toast from 'react-hot-toast';
 import { cn, getStatusColor, getPriorityColor, getStatusLabel } from '@/lib/utils';
+import { statusColors } from '@/components/ui/StatusBadge';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -16,24 +17,11 @@ import EmptyState from '@/components/ui/EmptyState';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
-const statuses = ['to-do', 'in-progress', 'qa', 'ready-for-qa', 'retest', 'blocked', 'ready-for-deploy', 'production', 'closed', 'cancelled'];
+const statuses = ['open', 'backlog', 'ready', 'in-progress', 'blocked', 'code-review', 'ready-for-qa', 'qa-in-progress', 'qa-failed', 'ready-for-release', 'released', 'done', 'closed', 'reopened', 'cancelled', 'stage'];
 const priorities = ['highest', 'high', 'medium', 'low', 'lowest'];
 const severities = ['critical', 'major', 'minor', 'trivial'];
 const environments = ['local', 'dev', 'qa', 'staging', 'uat', 'production'];
 const types = ['story', 'task', 'bug', 'improvement', 'spike', 'technical-task', 'research', 'production-issue'];
-
-const statusVariant: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'> = {
-  'to-do': 'default',
-  'in-progress': 'primary',
-  'qa': 'info',
-  'ready-for-qa': 'info',
-  'retest': 'warning',
-  'blocked': 'danger',
-  'ready-for-deploy': 'success',
-  'production': 'success',
-  'closed': 'default',
-  'cancelled': 'default',
-};
 
 const priorityVariant: Record<string, 'default' | 'danger' | 'warning' | 'info' | 'primary'> = {
   highest: 'danger',
@@ -146,6 +134,16 @@ export default function TicketsPage() {
     setDeleting(false);
     setDeleteId(null);
     load();
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    await api.put(`/tickets/${id}`, { status: newStatus });
+    toast.success('Status updated');
+    load();
+    if (viewTicket?._id === id) {
+      const { data } = await api.get(`/tickets/${id}`);
+      setViewTicket(data);
+    }
   };
 
   const toggleFavorite = async (id: string) => {
@@ -362,10 +360,22 @@ export default function TicketsPage() {
                     {t.isFavorite ? '⭐' : '☆'}
                   </Button>
                 </div>
-                <p className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">{t.title}</p>
+                <p className="text-sm font-semibold mb-2">
+                  <span className="inline-flex px-2 py-0.5 rounded" style={{ backgroundColor: statusColors[t.status]?.bg, color: statusColors[t.status]?.text }}>{t.title}</span>
+                </p>
                 <p className="text-xs text-[var(--color-text-secondary)] mb-3">{getProjectName(t.projectId)}</p>
                 <div className="flex flex-wrap items-center gap-1.5 mb-3">
-                  <Badge variant={statusVariant[t.status] || 'default'} dot>{getStatusLabel(t.status)}</Badge>
+                  <select
+                    value={t.status}
+                    onChange={e => { e.stopPropagation(); handleStatusChange(t._id, e.target.value); }}
+                    onClick={e => e.stopPropagation()}
+                    style={{ backgroundColor: statusColors[t.status]?.bg || '#F3F4F6', color: statusColors[t.status]?.text || '#6B7280' }}
+                    className="text-[11px] font-medium px-2 py-1 rounded-full border border-[var(--color-border)] cursor-pointer hover:opacity-80 focus:outline-none transition-all"
+                  >
+                    {statuses.map(s => (
+                      <option key={s} value={s}>{getStatusLabel(s)}</option>
+                    ))}
+                  </select>
                   <Badge variant={priorityVariant[t.priority] || 'default'}>{t.priority}</Badge>
                   <Badge variant="default">{t.type}</Badge>
                 </div>
@@ -412,10 +422,22 @@ export default function TicketsPage() {
                     onClick={() => setViewTicket(t)}
                   >
                     <td className="py-2 px-2 font-medium text-[var(--color-text-primary)]">{t.ticketNo}</td>
-                    <td className="py-2 px-2 max-w-xs truncate text-[var(--color-text-primary)]">{t.title}</td>
+                    <td className="py-2 px-2 max-w-xs truncate">
+                      <span className="inline-flex px-2 py-0.5 rounded" style={{ backgroundColor: statusColors[t.status]?.bg, color: statusColors[t.status]?.text }}>{t.title}</span>
+                    </td>
                     <td className="py-2 px-2 text-[var(--color-text-secondary)]">{getProjectName(t.projectId)}</td>
                     <td className="py-2 px-2">
-                      <Badge variant={statusVariant[t.status] || 'default'} dot>{getStatusLabel(t.status)}</Badge>
+                      <select
+                        value={t.status}
+                        onChange={e => { e.stopPropagation(); handleStatusChange(t._id, e.target.value); }}
+                        onClick={e => e.stopPropagation()}
+                        style={{ backgroundColor: statusColors[t.status]?.bg || '#F3F4F6', color: statusColors[t.status]?.text || '#6B7280' }}
+                        className="text-[11px] font-medium px-2 py-1 rounded-full border border-[var(--color-border)] cursor-pointer hover:opacity-80 focus:outline-none transition-all"
+                      >
+                        {statuses.map(s => (
+                          <option key={s} value={s}>{getStatusLabel(s)}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="py-2 px-2">
                       <Badge variant={priorityVariant[t.priority] || 'default'}>{t.priority}</Badge>
@@ -489,7 +511,16 @@ export default function TicketsPage() {
 
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <Badge variant={statusVariant[viewTicket.status] || 'default'} dot>{getStatusLabel(viewTicket.status)}</Badge>
+                <select
+                  value={viewTicket.status}
+                  onChange={e => handleStatusChange(viewTicket._id, e.target.value)}
+                  style={{ backgroundColor: statusColors[viewTicket.status]?.bg || '#F3F4F6', color: statusColors[viewTicket.status]?.text || '#6B7280' }}
+                  className="text-xs font-medium px-3 py-1.5 rounded-full border border-[var(--color-border)] cursor-pointer hover:opacity-80 focus:outline-none transition-all"
+                >
+                  {statuses.map(s => (
+                    <option key={s} value={s}>{getStatusLabel(s)}</option>
+                  ))}
+                </select>
                 <Badge variant={priorityVariant[viewTicket.priority] || 'default'}>{viewTicket.priority}</Badge>
               </div>
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{viewTicket.title}</h3>

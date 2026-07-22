@@ -26,9 +26,9 @@ export const getDashboard = async (req: AuthRequest, res: Response): Promise<voi
       Ticket.countDocuments({ userId, updatedAt: { $gte: today, $lte: endOfDay }, status: 'closed' }),
       Ticket.countDocuments({ userId, status: { $nin: ['closed', 'cancelled'] } }),
       Ticket.countDocuments({ userId, status: 'blocked' }),
-      Ticket.countDocuments({ userId, status: { $in: ['production'] }, closedDate: { $exists: false } }),
+      Ticket.countDocuments({ userId, status: { $in: ['released'] }, closedDate: { $exists: false } }),
       Ticket.countDocuments({ userId, status: 'ready-for-qa' }),
-      Ticket.countDocuments({ userId, status: 'ready-for-deploy' }),
+      Ticket.countDocuments({ userId, status: 'ready-for-release' }),
       Ticket.countDocuments({
         userId,
         reminderDate: { $lt: today },

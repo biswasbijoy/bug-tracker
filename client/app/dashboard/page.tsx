@@ -6,7 +6,7 @@ import { DashboardData } from '@/types';
 import AppLayout from '@/components/layout/AppLayout';
 import Link from 'next/link';
 import { SkeletonDashboard } from '@/components/ui/Skeleton';
-import { StatusBadge, PriorityBadge } from '@/components/ui/StatusBadge';
+import { StatusBadge, PriorityBadge, statusColors } from '@/components/ui/StatusBadge';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 
@@ -102,7 +102,9 @@ export default function DashboardPage() {
                     <span className="font-mono text-sm font-bold text-[var(--color-text-primary)]">{ticket.ticketNo}</span>
                   </td>
                   <td className="py-2.5 px-3 max-w-xs">
-                    <p className="text-sm text-[var(--color-text-primary)] truncate">{ticket.title}</p>
+                    <p className="text-sm truncate">
+                      <span className="inline-flex px-2 py-0.5 rounded" style={{ backgroundColor: statusColors[ticket.status]?.bg, color: statusColors[ticket.status]?.text }}>{ticket.title}</span>
+                    </p>
                   </td>
                   <td className="py-2.5 px-3">
                     <StatusBadge status={ticket.status} />

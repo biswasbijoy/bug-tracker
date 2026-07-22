@@ -30,16 +30,22 @@ interface FilterPanelProps {
 }
 
 const statusOptions = [
-  { value: 'to-do', label: 'To Do' },
+  { value: 'open', label: 'Open' },
+  { value: 'backlog', label: 'Backlog' },
+  { value: 'ready', label: 'Ready' },
   { value: 'in-progress', label: 'In Progress' },
-  { value: 'qa', label: 'QA' },
-  { value: 'ready-for-qa', label: 'Ready for QA' },
-  { value: 'retest', label: 'Retest' },
   { value: 'blocked', label: 'Blocked' },
-  { value: 'ready-for-deploy', label: 'Ready for Deploy' },
-  { value: 'production', label: 'Production' },
+  { value: 'code-review', label: 'Code Review' },
+  { value: 'ready-for-qa', label: 'Ready for QA' },
+  { value: 'qa-in-progress', label: 'QA In Progress' },
+  { value: 'qa-failed', label: 'QA Failed' },
+  { value: 'ready-for-release', label: 'Ready for Release' },
+  { value: 'released', label: 'Released' },
+  { value: 'done', label: 'Done' },
   { value: 'closed', label: 'Closed' },
+  { value: 'reopened', label: 'Reopened' },
   { value: 'cancelled', label: 'Cancelled' },
+  { value: 'stage', label: 'Stage' },
 ];
 
 const priorityOptions = [
