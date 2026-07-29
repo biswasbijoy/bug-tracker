@@ -111,15 +111,25 @@ export default function ProjectDetailPage() {
 
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
-    await api.post('/tickets', { ...ticketForm, projectId, epicId: ticketForm.epicId || undefined });
-    toast.success('Ticket created');
-    setShowTicketModal(false);
-    setTicketForm({
-      title: '', description: '', type: 'task', epicId: '', sprintId: '',
-      assignedTo: '', reporter: '', priority: 'medium', severity: 'major',
-      environment: 'qa', labels: [],
-    });
-    load();
+    try {
+      await api.post('/tickets', {
+        ...ticketForm,
+        projectId,
+        epicId: ticketForm.epicId || undefined,
+        sprintId: ticketForm.sprintId || undefined,
+      });
+      toast.success('Ticket created');
+      setShowTicketModal(false);
+      setTicketForm({
+        title: '', description: '', type: 'task', epicId: '', sprintId: '',
+        assignedTo: '', reporter: '', priority: 'medium', severity: 'major',
+        environment: 'qa', labels: [],
+      });
+      load();
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || 'Failed to create ticket');
+    }
   };
 
   const openTicket = async (ticket: Ticket) => {
