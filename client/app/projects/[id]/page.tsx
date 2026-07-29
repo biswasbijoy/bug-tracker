@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/services/api';
-import { Project, Epic, Ticket } from '@/types';
+import { Project, Epic, Ticket, Sprint } from '@/types';
 import AppLayout from '@/components/layout/AppLayout';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Button from '@/components/ui/Button';
@@ -43,6 +43,7 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [epics, setEpics] = useState<Epic[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [sprints, setSprints] = useState<Sprint[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedEpics, setExpandedEpics] = useState<Set<string>>(new Set());
 
@@ -54,7 +55,7 @@ export default function ProjectDetailPage() {
   const [ticketForm, setTicketForm] = useState({
     title: '', description: '', type: 'task', epicId: '', sprintId: '',
     assignedTo: '', reporter: '', priority: 'medium', severity: 'major',
-    environment: 'qa', labels: [] as string[],
+    environment: 'qa', jiraUrl: '', labels: [] as string[],
   });
   const [labelInput, setLabelInput] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -67,14 +68,16 @@ export default function ProjectDetailPage() {
 
   const load = useCallback(async () => {
     try {
-      const [projectRes, epicsRes, ticketsRes] = await Promise.all([
+      const [projectRes, epicsRes, ticketsRes, sprintsRes] = await Promise.all([
         api.get(`/projects/${projectId}`),
         api.get(`/epics?projectId=${projectId}`),
         api.get(`/tickets?projectId=${projectId}`),
+        api.get(`/sprints?projectId=${projectId}`),
       ]);
       setProject(projectRes.data);
       setEpics(epicsRes.data);
       setTickets(ticketsRes.data);
+      setSprints(sprintsRes.data);
     } catch {
       toast.error('Failed to load project');
       router.push('/projects');
@@ -123,7 +126,7 @@ export default function ProjectDetailPage() {
       setTicketForm({
         title: '', description: '', type: 'task', epicId: '', sprintId: '',
         assignedTo: '', reporter: '', priority: 'medium', severity: 'major',
-        environment: 'qa', labels: [],
+        environment: 'qa', jiraUrl: '', labels: [],
       });
       load();
     } catch (err: unknown) {
@@ -456,8 +459,13 @@ export default function ProjectDetailPage() {
             <select value={ticketForm.environment} onChange={e => setTicketForm({ ...ticketForm, environment: e.target.value })} className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-input)] px-3 py-2 text-sm">
               {['local', 'dev', 'qa', 'staging', 'uat', 'production'].map(e => <option key={e} value={e}>{e.charAt(0).toUpperCase() + e.slice(1)}</option>)}
             </select>
+            <select value={ticketForm.sprintId} onChange={e => setTicketForm({ ...ticketForm, sprintId: e.target.value })} className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-input)] px-3 py-2 text-sm">
+              <option value="">No Sprint</option>
+              {sprints.filter(s => s.projectId === projectId).map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+            </select>
             <Input label="Assigned To" value={ticketForm.assignedTo} onChange={e => setTicketForm({ ...ticketForm, assignedTo: e.target.value })} />
             <Input label="Reporter" value={ticketForm.reporter} onChange={e => setTicketForm({ ...ticketForm, reporter: e.target.value })} />
+            <Input label="Jira URL" placeholder="https://..." value={ticketForm.jiraUrl} onChange={e => setTicketForm({ ...ticketForm, jiraUrl: e.target.value })} />
           </div>
           <div>
             <div className="flex gap-2 mb-2">
