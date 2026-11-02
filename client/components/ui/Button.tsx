@@ -1,59 +1,87 @@
 'use client';
 
-import { forwardRef, ButtonHTMLAttributes } from 'react';
+import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
+import { Spinner } from './Misc';
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline' | 'success';
-  size?: 'sm' | 'md' | 'lg';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+export type ButtonSize = 'sm' | 'md' | 'lg';
+
+const variants: Record<ButtonVariant, string> = {
+  primary: 'bg-accent text-accent-fg hover:bg-accent-hover shadow-sm',
+  secondary: 'bg-subtle text-fg hover:bg-line',
+  outline: 'border border-line-strong bg-panel text-fg hover:bg-subtle',
+  ghost: 'text-fg-muted hover:bg-subtle hover:text-fg',
+  danger: 'bg-danger text-canvas hover:opacity-90 shadow-sm',
+};
+
+const sizes: Record<ButtonSize, string> = {
+  sm: 'h-7 gap-1.5 px-2.5 text-[13px]',
+  md: 'h-9 gap-2 px-3.5 text-sm',
+  lg: 'h-10 gap-2 px-5 text-sm',
+};
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   loading?: boolean;
+  /** leading icon */
   icon?: React.ReactNode;
-  iconPosition?: 'left' | 'right';
 }
 
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', loading, icon, iconPosition = 'left', children, disabled, ...props }, ref) => {
-    const base = 'inline-flex items-center justify-center font-medium transition-all duration-150 focus-ring disabled:opacity-50 disabled:cursor-not-allowed';
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { variant = 'secondary', size = 'md', loading, icon, className, children, disabled, type = 'button', ...props },
+  ref
+) {
+  return (
+    <button
+      ref={ref}
+      type={type}
+      disabled={disabled || loading}
+      className={cn(
+        'inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors',
+        'disabled:pointer-events-none disabled:opacity-50',
+        variants[variant],
+        sizes[size],
+        className
+      )}
+      {...props}
+    >
+      {loading ? <Spinner className="h-3.5 w-3.5" /> : icon}
+      {children}
+    </button>
+  );
+});
 
-    const variants = {
-      primary: 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] shadow-sm',
-      secondary: 'bg-[var(--color-border-light)] text-[var(--color-text-primary)] hover:bg-[var(--color-border)]',
-      danger: 'bg-[var(--color-danger)] text-white hover:opacity-90 shadow-sm',
-      ghost: 'bg-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-border-light)] hover:text-[var(--color-text-primary)]',
-      outline: 'border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-border-light)]',
-      success: 'bg-[var(--color-success)] text-white hover:opacity-90 shadow-sm',
-    };
+interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  /** required: icon-only buttons need an accessible name */
+  label: string;
+  size?: 'sm' | 'md';
+  active?: boolean;
+}
 
-    const sizes = {
-      sm: 'h-7 px-2.5 text-xs rounded-[8px] gap-1.5',
-      md: 'h-8 px-3 text-sm rounded-[10px] gap-2',
-      lg: 'h-10 px-4 text-base rounded-[10px] gap-2',
-    };
-
-    return (
-      <button
-        ref={ref}
-        className={cn(base, variants[variant], sizes[size], className)}
-        disabled={disabled || loading}
-        {...props}
-      >
-        {loading ? (
-          <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-        ) : icon && iconPosition === 'left' ? (
-          <span className="shrink-0">{icon}</span>
-        ) : null}
-        {children}
-        {!loading && icon && iconPosition === 'right' && (
-          <span className="shrink-0">{icon}</span>
-        )}
-      </button>
-    );
-  }
-);
-
-Button.displayName = 'Button';
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
+  { label, size = 'md', active, className, children, type = 'button', ...props },
+  ref
+) {
+  return (
+    <button
+      ref={ref}
+      type={type}
+      aria-label={label}
+      title={label}
+      className={cn(
+        'inline-flex shrink-0 items-center justify-center rounded-md text-fg-muted transition-colors hover:bg-subtle hover:text-fg',
+        'disabled:pointer-events-none disabled:opacity-50',
+        size === 'sm' ? 'h-7 w-7' : 'h-9 w-9',
+        active && 'bg-subtle text-fg',
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+});
 
 export default Button;

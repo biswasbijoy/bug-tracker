@@ -7,10 +7,10 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    try {
+      const token = localStorage.getItem('token');
+      if (token) config.headers.Authorization = `Bearer ${token}`;
+    } catch {}
   }
   return config;
 });
@@ -18,13 +18,23 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/auth';
+    if (typeof window !== 'undefined' && error.response?.status === 401) {
+      const url: string = error.config?.url || '';
+      // a wrong password on the login form is not an expired session
+      const isAuthCall = url.includes('/auth/login') || url.includes('/auth/register');
+      if (!isAuthCall && !window.location.pathname.startsWith('/auth')) {
+        try {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        } catch {}
+        window.location.href = '/auth';
+      }
     }
     return Promise.reject(error);
   }
 );
+
+/** Base URL of the API server without `/api` — used for uploaded files. */
+export const FILES_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
 
 export default api;

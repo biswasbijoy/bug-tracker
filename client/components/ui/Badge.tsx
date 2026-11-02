@@ -1,55 +1,62 @@
-'use client';
-
 import { cn } from '@/lib/utils';
+import { hueVar, type Hue } from '@/lib/tickets';
 
-interface BadgeProps {
-  children: React.ReactNode;
-  variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'outline';
-  size?: 'sm' | 'md';
-  dot?: boolean;
+type Tone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger' | 'info';
+
+const tones: Record<Tone, string> = {
+  neutral: 'bg-subtle text-fg-muted',
+  accent: 'bg-accent-soft text-accent',
+  success: 'bg-success-soft text-success',
+  warning: 'bg-warning-soft text-warning',
+  danger: 'bg-danger-soft text-danger',
+  info: 'bg-info-soft text-info',
+};
+
+export function Badge({
+  tone = 'neutral',
+  className,
+  children,
+}: {
+  tone?: Tone;
   className?: string;
-}
-
-export default function Badge({ children, variant = 'default', size = 'sm', dot, className }: BadgeProps) {
-  const variants = {
-    default: 'bg-[var(--color-border-light)] text-[var(--color-text-secondary)]',
-    primary: 'bg-[var(--color-primary-light)] text-[var(--color-primary)]',
-    success: 'bg-[var(--color-success-light)] text-[var(--color-success)]',
-    warning: 'bg-[var(--color-warning-light)] text-[var(--color-warning)]',
-    danger: 'bg-[var(--color-danger-light)] text-[var(--color-danger)]',
-    info: 'bg-[var(--color-info-light)] text-[var(--color-info)]',
-    outline: 'border border-[var(--color-border)] text-[var(--color-text-secondary)]',
-  };
-
-  const sizes = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-1 text-xs',
-  };
-
+  children: React.ReactNode;
+}) {
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 font-medium rounded-full',
-        variants[variant],
-        sizes[size],
-        className
-      )}
-    >
-      {dot && (
-        <span
-          className={cn(
-            'w-1.5 h-1.5 rounded-full',
-            variant === 'success' && 'bg-[var(--color-success)]',
-            variant === 'warning' && 'bg-[var(--color-warning)]',
-            variant === 'danger' && 'bg-[var(--color-danger)]',
-            variant === 'primary' && 'bg-[var(--color-primary)]',
-            variant === 'info' && 'bg-[var(--color-info)]',
-            variant === 'default' && 'bg-[var(--color-text-muted)]',
-            variant === 'outline' && 'bg-[var(--color-text-muted)]'
-          )}
-        />
-      )}
+    <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', tones[tone], className)}>
       {children}
     </span>
   );
 }
+
+interface ChipProps {
+  hue: Hue | string;
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  /** show a coloured dot before the text */
+  dot?: boolean;
+  bordered?: boolean;
+  className?: string;
+  title?: string;
+}
+
+/** Hue-tinted chip: status, priority, type, label colours all render through this. */
+export function Chip({ hue, children, icon, dot, bordered, className, title }: ChipProps) {
+  const value = hue.startsWith('#') || hue.startsWith('var(') ? hue : hueVar(hue);
+  return (
+    <span
+      title={title}
+      style={{ ['--hue' as string]: value }}
+      className={cn(
+        'chip inline-flex max-w-full items-center gap-1.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-xs font-medium leading-4',
+        bordered && 'chip-border',
+        className
+      )}
+    >
+      {dot && <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--hue)' }} />}
+      {icon}
+      <span className="truncate">{children}</span>
+    </span>
+  );
+}
+
+export default Badge;

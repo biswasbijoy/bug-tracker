@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { Note } from '../models';
 import { AuthRequest } from '../middleware/auth';
+import { stripProtected } from '../utils/stripProtected';
 
 export const getNotes = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -24,8 +25,8 @@ export const updateNote = async (req: AuthRequest, res: Response): Promise<void>
   try {
     const note = await Note.findOneAndUpdate(
       { _id: req.params.id, userId: req.userId },
-      req.body,
-      { new: true }
+      stripProtected(req.body),
+      { new: true, runValidators: true }
     );
     if (!note) { res.status(404).json({ message: 'Note not found' }); return; }
     res.json(note);

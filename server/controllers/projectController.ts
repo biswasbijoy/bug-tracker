@@ -1,6 +1,7 @@
 import { Response } from 'express';
-import { Project, Epic, Ticket } from '../models';
+import { Project, Epic, Sprint, Ticket } from '../models';
 import { AuthRequest } from '../middleware/auth';
+import { stripProtected } from '../utils/stripProtected';
 
 export const getProjects = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -34,8 +35,8 @@ export const updateProject = async (req: AuthRequest, res: Response): Promise<vo
   try {
     const project = await Project.findOneAndUpdate(
       { _id: req.params.id, userId: req.userId },
-      req.body,
-      { new: true }
+      stripProtected(req.body),
+      { new: true, runValidators: true }
     );
     if (!project) { res.status(404).json({ message: 'Project not found' }); return; }
     res.json(project);
@@ -48,7 +49,17 @@ export const deleteProject = async (req: AuthRequest, res: Response): Promise<vo
   try {
     const project = await Project.findOneAndDelete({ _id: req.params.id, userId: req.userId });
     if (!project) { res.status(404).json({ message: 'Project not found' }); return; }
-    res.json({ message: 'Project deleted' });
+    // cascade: nothing may reference a deleted project
+    const scope = { projectId: project._id, userId: req.userId };
+    const [tickets, epics, sprints] = await Promise.all([
+      Ticket.deleteMany(scope),
+      Epic.deleteMany(scope),
+      Sprint.deleteMany(scope),
+    ]);
+    res.json({
+      message: 'Project deleted',
+      deleted: { tickets: tickets.deletedCount, epics: epics.deletedCount, sprints: sprints.deletedCount },
+    });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }

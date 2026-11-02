@@ -1,23 +1,14 @@
-'use client';
-
-import Button from '@/components/ui/Button';
 import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] px-4">
-      <div className="text-center max-w-md">
-        <div className="w-14 h-14 bg-[var(--color-primary-light)] rounded-2xl flex items-center justify-center mx-auto mb-6">
-          <span className="text-4xl font-bold text-[var(--color-primary)]">404</span>
-        </div>
-        <h1 className="text-xl font-bold text-[var(--color-text-primary)] mb-1">Page Not Found</h1>
-        <p className="text-xs text-[var(--color-text-secondary)] mb-6">
-          The page you are looking for does not exist or has been moved.
-        </p>
-        <Link href="/dashboard">
-          <Button>Back to Dashboard</Button>
-        </Link>
-      </div>
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-canvas px-6 text-center">
+      <p className="font-mono text-sm text-fg-subtle">404</p>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-fg">Page not found</h1>
+      <p className="mt-1 max-w-sm text-sm text-fg-muted">The page you&apos;re looking for doesn&apos;t exist or was moved.</p>
+      <Link href="/dashboard" className="mt-6 inline-flex h-9 items-center rounded-md bg-accent px-4 text-sm font-medium text-accent-fg hover:bg-accent-hover">
+        Back to home
+      </Link>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { Response } from 'express';
-import { Epic } from '../models';
+import { Epic, Ticket } from '../models';
 import { AuthRequest } from '../middleware/auth';
+import { stripProtected } from '../utils/stripProtected';
 
 export const getEpics = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -36,8 +37,8 @@ export const updateEpic = async (req: AuthRequest, res: Response): Promise<void>
   try {
     const epic = await Epic.findOneAndUpdate(
       { _id: req.params.id, userId: req.userId },
-      req.body,
-      { new: true }
+      stripProtected(req.body),
+      { new: true, runValidators: true }
     );
     if (!epic) { res.status(404).json({ message: 'Epic not found' }); return; }
     res.json(epic);
@@ -50,6 +51,8 @@ export const deleteEpic = async (req: AuthRequest, res: Response): Promise<void>
   try {
     const epic = await Epic.findOneAndDelete({ _id: req.params.id, userId: req.userId });
     if (!epic) { res.status(404).json({ message: 'Epic not found' }); return; }
+    // tickets stay, they just lose the epic
+    await Ticket.updateMany({ epicId: epic._id, userId: req.userId }, { $unset: { epicId: 1 } });
     res.json({ message: 'Epic deleted' });
   } catch (err: any) {
     res.status(500).json({ message: err.message });

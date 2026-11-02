@@ -1,5 +1,6 @@
 node_modules/
 .next/
+.next-*/
 data/
 uploads/
 .env
@@ -7,3 +8,4 @@ uploads/
 *.log
 plan.md
 UIPlan.md
+*.tsbuildinfo

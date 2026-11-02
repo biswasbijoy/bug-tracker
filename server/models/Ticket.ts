@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export type TicketType = 'story' | 'task' | 'bug' | 'improvement' | 'spike' | 'technical-task' | 'research' | 'production-issue';
-export type TicketStatus = 'open' | 'backlog' | 'ready' | 'in-progress' | 'blocked' | 'code-review' | 'ready-for-qa' | 'qa-in-progress' | 'qa-failed' | 'ready-for-release' | 'released' | 'done' | 'closed' | 'reopened' | 'cancelled' | 'stage';
+export type TicketStatus = 'open' | 'backlog' | 'ready' | 'in-progress' | 'blocked' | 'code-review' | 'ready-for-qa' | 'qa-in-progress' | 'qa-failed' | 'ready-for-release' | 'released' | 'done' | 'closed' | 'reopened' | 'cancelled' | 'stage' | 'to-do';
 export type TicketPriority = 'highest' | 'high' | 'medium' | 'low' | 'lowest';
 export type TicketSeverity = 'critical' | 'major' | 'minor' | 'trivial';
 export type TicketEnvironment = 'local' | 'dev' | 'qa' | 'staging' | 'uat' | 'production';
@@ -65,7 +65,7 @@ export interface ITicket extends Document {
 
 const ChecklistItemSchema = new Schema<IChecklistItem>(
   { text: { type: String, required: true }, completed: { type: Boolean, default: false } },
-  { _id: false }
+  { _id: true }
 );
 
 const CommentSchema = new Schema<IComment>(
@@ -108,7 +108,7 @@ const TicketSchema = new Schema<ITicket>(
     reporter: { type: String, trim: true },
     status: {
       type: String,
-      enum: ['open', 'backlog', 'ready', 'in-progress', 'blocked', 'code-review', 'ready-for-qa', 'qa-in-progress', 'qa-failed', 'ready-for-release', 'released', 'done', 'closed', 'reopened', 'cancelled', 'stage'],
+      enum: ['open', 'backlog', 'ready', 'in-progress', 'blocked', 'code-review', 'ready-for-qa', 'qa-in-progress', 'qa-failed', 'ready-for-release', 'released', 'done', 'closed', 'reopened', 'cancelled', 'stage', 'to-do'],
       default: 'open',
     },
     priority: {

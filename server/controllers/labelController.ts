@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { Label } from '../models';
 import { AuthRequest } from '../middleware/auth';
+import { stripProtected } from '../utils/stripProtected';
 
 export const getLabels = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -24,8 +25,8 @@ export const updateLabel = async (req: AuthRequest, res: Response): Promise<void
   try {
     const label = await Label.findOneAndUpdate(
       { _id: req.params.id, userId: req.userId },
-      req.body,
-      { new: true }
+      stripProtected(req.body),
+      { new: true, runValidators: true }
     );
     if (!label) { res.status(404).json({ message: 'Label not found' }); return; }
     res.json(label);

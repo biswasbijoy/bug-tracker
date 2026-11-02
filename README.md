@@ -1,48 +1,49 @@
 # SQA Ticket Tracker
 
-A personal ticket / bug tracking dashboard purpose-built for SQA Engineers to manage projects, epics, sprints, tickets, and releases in one place. It combines ideas from Jira, Linear, GitHub Projects, and Notion into a clean, fast, keyboard-friendly workspace — see [UIPlan.md](UIPlan.md) for the full design specification.
+A focused ticket tracker for QA and dev work: projects, epics, sprints and tickets on one pipeline (**To do → In progress → QA → Release → Done**), with a fast, keyboard-friendly UI in light and dark themes.
+
+**All data lives in your own local MongoDB** (`mongodb://localhost:27017/ticket-tracker` by default). Nothing is sent to any shared or hosted database. See [docs/REDESIGN_PLAN.md](docs/REDESIGN_PLAN.md) for the product plan and [docs/UI_CONVENTIONS.md](docs/UI_CONVENTIONS.md) for how the client is organised.
 
 ## Features
 
-- **Auth** — email/password sign up & login (JWT-based sessions)
-- **Dashboard** — live stats (total/pending/blocked/completed tickets, production/deploy status), recently updated tickets
-- **Projects** — create/manage projects with client, description, and color
-- **Epics & Sprints** — group and schedule work within a project
-- **Tickets** — full CRUD with type, priority, severity, environment, labels, checklist, comments, attachments, and Jira linking; searchable/filterable list with a responsive table (desktop) / card (mobile) view
-- **Kanban Board** — drag-and-drop tickets across To Do → In Progress → QA → Retest → Ready → Production → Closed
-- **Calendar** — month/week/day/agenda views for deadlines, reminders, and deployments
-- **Reports** — charts and exportable tables
-- **Notes & Labels** — lightweight supporting modules
-- **Notifications** — in-app notification center
-- **Command palette** — `Ctrl+K` global search and quick navigation
-- **Dark / light theme** — persisted per user
+- **Home** — what needs attention (overdue, due today, blocked, QA failed), pipeline overview, your queue, recent activity, project progress
+- **Tickets** — one grouped list (by stage, status, priority, assignee, project, epic) with search, filters, sorting and inline status/priority changes; filters live in the URL so views are shareable
+- **Board** — drag-and-drop kanban by pipeline stage or by exact status
+- **Ticket page** (`/tickets/:id`) — inline-editable properties, description, sub-tasks, checklist, QA sign-off (test / regression / smoke), attachments, comments, full activity history
+- **Projects** — project workspace with Overview, Tickets, Board, Epics, Sprints and Activity tabs
+- **Epics & Sprints** — progress, due dates, start/complete sprint
+- **Calendar** — due dates, deployments and production releases (month grid or agenda)
+- **Reports** — created vs closed, status/priority/type mix, ageing, per-project split, QA sign-off, cycle time — all computed from your tickets
+- **Notes**, **Labels** (Settings), **Needs-attention bell** (derived live from tickets)
+- **Command palette** — `Ctrl K` / `/` to jump to any ticket, project or page; `C` creates a ticket; `G` then `D/T/B/P/C/R` navigates
+- **Light / dark / system theme**, responsive down to phone width
 
 ## Tech Stack
 
-**Client** — Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS v4, Zustand, Axios, `@hello-pangea/dnd`, Recharts, `react-hot-toast`, `date-fns`
+**Client** — Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS v4, Zustand, Axios, `@hello-pangea/dnd`, Recharts, `react-hot-toast`, `date-fns`, `@heroicons/react`
 
-**Server** — Node.js, Express, TypeScript, MongoDB with Mongoose, JWT auth, Multer (file uploads), `express-validator`, `node-cron`
+**Server** — Node.js, Express, TypeScript, MongoDB with Mongoose, JWT auth, Multer (attachments)
 
 ## Project Structure
 
 ```
 bug-tracker/
-├── client/               # Next.js frontend
-│   ├── app/              # Routes (dashboard, projects, tickets, kanban, ...)
-│   ├── components/       # layout/ (Header, Sidebar, ...) and ui/ (design-system primitives)
-│   ├── hooks/            # Custom hooks (keyboard shortcuts, etc.)
-│   ├── lib/               # theme provider, utils
-│   ├── services/         # Axios API client
-│   ├── store/            # Zustand stores (auth, notifications)
-│   └── types/            # Shared TypeScript types
-├── server/               # Express backend
-│   ├── config/           # Environment/config loader
-│   ├── controllers/      # Route handlers
-│   ├── middleware/       # Auth, validation, etc.
-│   ├── models/           # Mongoose schemas
-│   └── routes/           # API route definitions
-├── UIPlan.md              # UI/UX design specification
-└── package.json           # Convenience scripts to run client + server together
+├── client/
+│   ├── app/
+│   │   ├── auth/             # sign in / create account
+│   │   └── (app)/            # authenticated pages (dashboard, tickets, board, projects, epics, sprints, calendar, reports, notes, settings)
+│   ├── components/
+│   │   ├── ui/               # design-system primitives (Button, Form, Dialog, Popover/Menu, Tabs, …)
+│   │   ├── layout/           # app shell: Sidebar, MobileNav, NotificationsMenu, UserMenu
+│   │   ├── tickets/          # ticket badges, filters, list, board, form dialog, ticket detail
+│   │   └── planning/ dashboard/ calendar/ reports/ notes/ settings/
+│   ├── lib/tickets.ts        # single source of truth: statuses, stages, priorities, types, colours
+│   ├── store/                # workspaceStore (all data + mutations), uiStore, authStore
+│   └── services/api.ts       # Axios client
+├── server/                   # Express API (config, controllers, middleware, models, routes)
+├── docs/                     # redesign plan + UI conventions
+├── start.ps1                 # Windows launcher (MongoDB + API + client)
+└── package.json
 ```
 
 ## Prerequisites
@@ -154,17 +155,24 @@ Open [http://localhost:3000](http://localhost:3000), sign up for an account, and
 
 ## API Overview
 
-All routes are mounted under `http://localhost:5000/api`:
+All routes are mounted under `http://localhost:5000/api` and (except auth) require `Authorization: Bearer <token>`, set automatically by the client after login. Every record is scoped to the signed-in user.
 
-- `POST /auth/register`, `POST /auth/login`
-- `GET/POST/PUT/DELETE /projects`
-- `GET/POST/PUT/DELETE /epics`
-- `GET/POST/PUT/DELETE /sprints`
-- `GET/POST/PUT/DELETE /tickets` (plus `/tickets/:id/comments`, `/tickets/:id/checklist`, `/tickets/:id/favorite`)
-- `GET /dashboard`
-- `GET/POST/PUT/DELETE /notes`
-- `GET/POST/PUT/DELETE /labels`
-- `POST /upload`
+- `POST /auth/register`, `POST /auth/login`, `GET|PUT /auth/me`, `PUT /auth/password`
+- `GET|POST|PUT|DELETE /projects` — deleting a project also deletes its tickets, epics and sprints
+- `GET|POST|PUT|DELETE /epics`, `/sprints` — deleting one only detaches its tickets
+- `GET|POST|PUT|DELETE /tickets` — filters: `projectId, epicId, sprintId, parentTicketId, status, priority, type, severity, environment, labels, isFavorite, search, sort`
+  - `PATCH /tickets/:id/favorite`
+  - `POST /tickets/:id/comments`, `DELETE /tickets/:id/comments/:commentId`
+  - `POST /tickets/:id/checklist`, `PATCH|DELETE /tickets/:id/checklist/:itemId`
+  - `POST /tickets/:id/attachments` (multipart field `file`), `DELETE /tickets/:id/attachments/:filename`
+- `GET|POST|PUT|DELETE /notes`, `/labels`
 - `GET /health`
 
-Requests to protected routes require an `Authorization: Bearer <token>` header, set automatically by the client after login.
+Ticket numbers (`QA-12`) are assigned as *highest existing number + 1*, so deleting tickets never produces duplicates.
+
+## Your data
+
+- Data is stored in the MongoDB database named in `MONGODB_URI` (default `ticket-tracker`) — keep it pointing at `localhost`.
+- Uploaded attachments are stored in `uploads/` at the repo root (git-ignored).
+- **Back up before big changes:** `mongodump --uri="mongodb://localhost:27017/ticket-tracker" --out=data/backups/$(date +%Y%m%d)` (restore with `mongorestore`). `Settings → Data` also exports everything as JSON.
+- Older tickets keep working: the legacy status `to-do` is still accepted and shown as "To do".

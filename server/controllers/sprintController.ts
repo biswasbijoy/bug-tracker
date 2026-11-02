@@ -1,6 +1,7 @@
 import { Response } from 'express';
-import { Sprint } from '../models';
+import { Sprint, Ticket } from '../models';
 import { AuthRequest } from '../middleware/auth';
+import { stripProtected } from '../utils/stripProtected';
 
 export const getSprints = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -36,8 +37,8 @@ export const updateSprint = async (req: AuthRequest, res: Response): Promise<voi
   try {
     const sprint = await Sprint.findOneAndUpdate(
       { _id: req.params.id, userId: req.userId },
-      req.body,
-      { new: true }
+      stripProtected(req.body),
+      { new: true, runValidators: true }
     );
     if (!sprint) { res.status(404).json({ message: 'Sprint not found' }); return; }
     res.json(sprint);
@@ -50,6 +51,8 @@ export const deleteSprint = async (req: AuthRequest, res: Response): Promise<voi
   try {
     const sprint = await Sprint.findOneAndDelete({ _id: req.params.id, userId: req.userId });
     if (!sprint) { res.status(404).json({ message: 'Sprint not found' }); return; }
+    // tickets stay, they just lose the sprint
+    await Ticket.updateMany({ sprintId: sprint._id, userId: req.userId }, { $unset: { sprintId: 1 } });
     res.json({ message: 'Sprint deleted' });
   } catch (err: any) {
     res.status(500).json({ message: err.message });

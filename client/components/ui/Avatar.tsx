@@ -1,61 +1,27 @@
-'use client';
+import { cn, initials, pickBy } from '@/lib/utils';
+import { hueVar } from '@/lib/tickets';
 
-import { cn } from '@/lib/utils';
+const HUES = ['blue', 'violet', 'teal', 'pink', 'orange', 'green', 'amber'] as const;
 
-interface AvatarProps {
-  src?: string;
-  alt?: string;
-  name?: string;
-  size?: 'xs' | 'sm' | 'md' | 'lg';
-  className?: string;
-}
+const sizes = {
+  xs: 'h-5 w-5 text-[9px]',
+  sm: 'h-6 w-6 text-[10px]',
+  md: 'h-8 w-8 text-xs',
+  lg: 'h-10 w-10 text-sm',
+};
 
-export default function Avatar({ src, alt, name, size = 'md', className }: AvatarProps) {
-  const sizes = {
-    xs: 'w-6 h-6 text-[10px]',
-    sm: 'w-8 h-8 text-xs',
-    md: 'w-9 h-9 text-sm',
-    lg: 'w-11 h-11 text-base',
-  };
-
-  const initials = name
-    ? name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
-    : '?';
-
-  const colors = [
-    'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
-    'bg-orange-500', 'bg-teal-500', 'bg-indigo-500', 'bg-rose-500',
-  ];
-
-  const colorIndex = name
-    ? name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length
-    : 0;
-
-  if (src) {
-    return (
-      <img
-        src={src}
-        alt={alt || name || 'Avatar'}
-        className={cn('rounded-full object-cover', sizes[size], className)}
-      />
-    );
-  }
-
+export function Avatar({ name, size = 'md', className }: { name: string; size?: keyof typeof sizes; className?: string }) {
+  const hue = pickBy(name || '?', [...HUES]);
   return (
-    <div
-      className={cn(
-        'rounded-full flex items-center justify-center font-semibold text-white shrink-0',
-        sizes[size],
-        colors[colorIndex],
-        className
-      )}
+    <span
+      aria-hidden
+      title={name}
+      style={{ ['--hue' as string]: hueVar(hue) }}
+      className={cn('chip inline-flex shrink-0 items-center justify-center rounded-full font-semibold', sizes[size], className)}
     >
-      {initials}
-    </div>
+      {initials(name || '?')}
+    </span>
   );
 }
+
+export default Avatar;

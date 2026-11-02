@@ -1,132 +1,204 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
+import {
+  ArrowPathRoundedSquareIcon, CalendarDaysIcon, ChartBarIcon, Cog6ToothIcon, FolderIcon, HomeIcon,
+  MagnifyingGlassIcon, MoonIcon, PencilSquareIcon, PlusIcon, RectangleStackIcon, TicketIcon, ViewColumnsIcon,
+} from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/lib/theme-provider';
+import { useWorkspace } from '@/store/workspaceStore';
+import { useUi } from '@/store/uiStore';
+import { TicketKey, TypeIcon } from '@/components/tickets/badges';
+import { Kbd } from './Misc';
 
-interface CommandItem {
+interface Item {
   id: string;
+  group: 'Actions' | 'Go to' | 'Projects' | 'Tickets';
   label: string;
-  icon?: React.ReactNode;
-  category?: string;
-  action?: () => void;
+  hint?: string;
+  icon: React.ReactNode;
+  keywords?: string;
+  run: () => void;
 }
 
-interface CommandPaletteProps {
-  isOpen: boolean;
-  onClose: () => void;
-  items: CommandItem[];
-  placeholder?: string;
-}
+const ic = 'h-4 w-4';
 
-export default function CommandPalette({ isOpen, onClose, items, placeholder = 'Search...' }: CommandPaletteProps) {
+/** Ctrl/⌘ K: jump to any page, project or ticket, or run an action. */
+export default function CommandPalette() {
+  const open = useUi((s) => s.paletteOpen);
+  const setOpen = useUi((s) => s.setPaletteOpen);
+  const openNewTicket = useUi((s) => s.openNewTicket);
+  const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
+  const tickets = useWorkspace((s) => s.tickets);
+  const projects = useWorkspace((s) => s.projects);
+
   const [query, setQuery] = useState('');
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [active, setActive] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const filtered = items.filter((item) =>
-    item.label.toLowerCase().includes(query.toLowerCase())
-  );
-
-  const grouped = filtered.reduce<Record<string, CommandItem[]>>((acc, item) => {
-    const cat = item.category || 'Results';
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(item);
-    return acc;
-  }, {});
-
+  useEffect(() => setMounted(true), []);
   useEffect(() => {
-    if (isOpen) {
+    if (open) {
       setQuery('');
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      setActive(0);
+      setTimeout(() => inputRef.current?.focus(), 20);
     }
-  }, [isOpen]);
+  }, [open]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const go = (href: string) => () => router.push(href);
+
+  const items = useMemo<Item[]>(() => {
+    const base: Item[] = [
+      { id: 'a-ticket', group: 'Actions', label: 'Create ticket', hint: 'C', icon: <PlusIcon className={ic} />, keywords: 'new add', run: () => openNewTicket() },
+      { id: 'a-project', group: 'Actions', label: 'Create project', icon: <FolderIcon className={ic} />, keywords: 'new add', run: go('/projects?new=1') },
+      {
+        id: 'a-theme',
+        group: 'Actions',
+        label: resolvedTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme',
+        icon: <MoonIcon className={ic} />,
+        keywords: 'dark light appearance',
+        run: () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark'),
+      },
+      { id: 'n-home', group: 'Go to', label: 'Home', hint: 'G D', icon: <HomeIcon className={ic} />, run: go('/dashboard') },
+      { id: 'n-tickets', group: 'Go to', label: 'Tickets', hint: 'G T', icon: <TicketIcon className={ic} />, run: go('/tickets') },
+      { id: 'n-board', group: 'Go to', label: 'Board', hint: 'G B', icon: <ViewColumnsIcon className={ic} />, keywords: 'kanban', run: go('/board') },
+      { id: 'n-projects', group: 'Go to', label: 'Projects', hint: 'G P', icon: <FolderIcon className={ic} />, run: go('/projects') },
+      { id: 'n-epics', group: 'Go to', label: 'Epics', icon: <RectangleStackIcon className={ic} />, run: go('/epics') },
+      { id: 'n-sprints', group: 'Go to', label: 'Sprints', icon: <ArrowPathRoundedSquareIcon className={ic} />, run: go('/sprints') },
+      { id: 'n-cal', group: 'Go to', label: 'Calendar', hint: 'G C', icon: <CalendarDaysIcon className={ic} />, run: go('/calendar') },
+      { id: 'n-reports', group: 'Go to', label: 'Reports', hint: 'G R', icon: <ChartBarIcon className={ic} />, keywords: 'analytics charts', run: go('/reports') },
+      { id: 'n-notes', group: 'Go to', label: 'Notes', icon: <PencilSquareIcon className={ic} />, run: go('/notes') },
+      { id: 'n-settings', group: 'Go to', label: 'Settings', icon: <Cog6ToothIcon className={ic} />, keywords: 'profile labels theme', run: go('/settings') },
+    ];
+    const projectItems: Item[] = projects
+      .filter((p) => p.status === 'active')
+      .map((p) => ({
+        id: `p-${p._id}`,
+        group: 'Projects',
+        label: p.name,
+        icon: <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: p.color }} />,
+        run: go(`/projects/${p._id}`),
+      }));
+    const ticketItems: Item[] = [...tickets]
+      .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))
+      .map((t) => ({
+        id: `t-${t._id}`,
+        group: 'Tickets',
+        label: t.title,
+        hint: t.ticketNo,
+        icon: <TypeIcon type={t.type} />,
+        keywords: `${t.ticketNo} ${t.assignedTo || ''} ${t.labels.join(' ')}`,
+        run: go(`/tickets/${t._id}`),
+      }));
+    return [...base, ...projectItems, ...ticketItems];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tickets, projects, resolvedTheme]);
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [...items.filter((i) => i.group !== 'Tickets' && i.group !== 'Projects'), ...items.filter((i) => i.group === 'Tickets').slice(0, 5)];
+    const tokens = q.split(/\s+/);
+    return items
+      .filter((i) => {
+        const hay = `${i.label} ${i.hint || ''} ${i.keywords || ''} ${i.group}`.toLowerCase();
+        return tokens.every((t) => hay.includes(t));
+      })
+      .slice(0, 30);
+  }, [items, query]);
+
+  useEffect(() => setActive(0), [query]);
+  useEffect(() => {
+    listRef.current?.querySelector<HTMLElement>(`[data-index="${active}"]`)?.scrollIntoView({ block: 'nearest' });
+  }, [active]);
+
+  if (!mounted || !open) return null;
+
+  const choose = (item?: Item) => {
+    if (!item) return;
+    setOpen(false);
+    item.run();
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex((i) => Math.min(i + 1, filtered.length - 1));
+      setActive((a) => Math.min(a + 1, results.length - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter' && filtered[selectedIndex]) {
-      filtered[selectedIndex].action?.();
-      onClose();
+      setActive((a) => Math.max(a - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      choose(results[active]);
     } else if (e.key === 'Escape') {
-      onClose();
+      setOpen(false);
     }
-  }, [filtered, selectedIndex, onClose]);
+  };
 
-  useEffect(() => {
-    if (listRef.current) {
-      const selected = listRef.current.querySelector(`[data-index="${selectedIndex}"]`);
-      selected?.scrollIntoView({ block: 'nearest' });
-    }
-  }, [selectedIndex]);
-
-  if (!isOpen) return null;
-
-  let flatIndex = -1;
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center pt-[15vh]" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50 animate-fade-in" />
+  let lastGroup = '';
+  return createPortal(
+    <div
+      className="anim-fade fixed inset-0 z-[70] flex items-start justify-center bg-black/50 p-4 pt-[12vh] backdrop-blur-[2px]"
+      onMouseDown={(e) => e.target === e.currentTarget && setOpen(false)}
+    >
       <div
-        className="relative bg-[var(--color-surface)] rounded-[var(--radius-dialog)] shadow-[var(--shadow-dialog)] w-full max-w-lg overflow-hidden animate-scale-in"
-        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette"
+        onKeyDown={onKeyDown}
+        className="anim-pop flex max-h-[70dvh] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-line bg-panel shadow-lg"
       >
-        <div className="flex items-center gap-3 px-4 border-b border-[var(--color-border)]">
-          <svg className="w-4 h-4 text-[var(--color-text-muted)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+        <div className="flex items-center gap-2.5 border-b border-line px-3.5">
+          <MagnifyingGlassIcon className="h-[18px] w-[18px] text-fg-subtle" />
           <input
             ref={inputRef}
-            type="text"
             value={query}
-            onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            className="flex-1 bg-transparent py-3 text-sm outline-none placeholder:text-[var(--color-text-muted)]"
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search tickets, projects, pages…"
+            className="h-12 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-subtle"
+            aria-label="Search"
           />
-          <kbd className="px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-text-muted)] bg-[var(--color-border-light)] rounded border border-[var(--color-border)]">
-            ESC
-          </kbd>
+          <Kbd>Esc</Kbd>
         </div>
-        <div ref={listRef} className="max-h-80 overflow-y-auto py-2">
-          {Object.entries(grouped).map(([category, items]) => (
-            <div key={category}>
-              <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                {category}
-              </div>
-              {items.map((item) => {
-                flatIndex++;
-                const idx = flatIndex;
-                return (
+        <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto p-1.5">
+          {results.length === 0 ? (
+            <div className="px-3 py-10 text-center text-[13px] text-fg-muted">Nothing found for “{query}”</div>
+          ) : (
+            results.map((item, i) => {
+              const showGroup = item.group !== lastGroup;
+              lastGroup = item.group;
+              return (
+                <div key={item.id}>
+                  {showGroup && (
+                    <div className="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-fg-subtle">{item.group}</div>
+                  )}
                   <button
-                    key={item.id}
-                    data-index={idx}
-                    onClick={() => { item.action?.(); onClose(); }}
-                    onMouseEnter={() => setSelectedIndex(idx)}
+                    type="button"
+                    data-index={i}
+                    onMouseMove={() => setActive(i)}
+                    onClick={() => choose(item)}
                     className={cn(
-                      'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors',
-                      selectedIndex === idx ? 'bg-[var(--color-border-light)] text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'
+                      'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] text-fg',
+                      i === active && 'bg-subtle'
                     )}
                   >
-                    {item.icon && <span className="w-4 h-4 shrink-0 text-[var(--color-text-muted)]">{item.icon}</span>}
-                    <span>{item.label}</span>
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center text-fg-subtle">{item.icon}</span>
+                    <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                    {item.hint &&
+                      (item.group === 'Tickets' ? <TicketKey ticketNo={item.hint} /> : <span className="text-xs text-fg-subtle">{item.hint}</span>)}
                   </button>
-                );
-              })}
-            </div>
-          ))}
-          {filtered.length === 0 && (
-            <div className="px-4 py-8 text-center text-sm text-[var(--color-text-muted)]">
-              No results found
-            </div>
+                </div>
+              );
+            })
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

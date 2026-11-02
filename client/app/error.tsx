@@ -1,32 +1,23 @@
 'use client';
 
-import Button from '@/components/ui/Button';
+import { useEffect } from 'react';
 
-interface ErrorProps {
-  error: Error & { digest?: string };
-  reset: () => void;
-}
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
 
-export default function Error({ error, reset }: ErrorProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] px-4">
-      <div className="text-center max-w-md">
-        <div className="w-14 h-14 bg-[var(--color-danger-light)] rounded-2xl flex items-center justify-center mx-auto mb-6">
-          <svg className="w-7 h-7 text-[var(--color-danger)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </div>
-        <h1 className="text-xl font-bold text-[var(--color-text-primary)] mb-1">Something went wrong</h1>
-        <p className="text-xs text-[var(--color-text-secondary)] mb-6">
-          An unexpected error occurred. Please try again.
-        </p>
-        <div className="flex items-center justify-center gap-3">
-          <Button onClick={reset}>Try Again</Button>
-          <Button variant="outline" onClick={() => window.location.href = '/dashboard'}>
-            Back to Dashboard
-          </Button>
-        </div>
-      </div>
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-canvas px-6 text-center">
+      <h1 className="text-xl font-semibold tracking-tight text-fg">Something went wrong</h1>
+      <p className="mt-1 max-w-sm text-sm text-fg-muted">{error.message || 'An unexpected error occurred.'}</p>
+      <button
+        type="button"
+        onClick={reset}
+        className="mt-6 inline-flex h-9 items-center rounded-md bg-accent px-4 text-sm font-medium text-accent-fg hover:bg-accent-hover"
+      >
+        Try again
+      </button>
     </div>
   );
 }
